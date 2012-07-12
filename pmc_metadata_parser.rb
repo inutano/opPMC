@@ -5,7 +5,7 @@ require "ap"
 
 class PMCMetadataParser
   def initialize(xml)
-    @nkgr = Nokogiri::XML(open(xml))
+    @nkgr = Nokogiri::XML(xml)
   end
   
   def journal_id
@@ -104,6 +104,6 @@ end
 
 
 if __FILE__ == $0
-  p = PMCMetadataParser.new("./test.xml")
+  p = PMCMetadataParser.new(open("./test.xml"))
   ap p.all
 end
