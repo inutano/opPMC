@@ -19,12 +19,18 @@ module PubMedIDConverter
       @pmid = pmid
     end
     
+    def pubmed_xml
+      eutil_base = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?"
+      arg = "db=pubmed&id=#{@pmid}&retmode=xml"
+      open(eutil_base + arg).read
+    end
+    
     def pmcid
       grepped = `grep #{@pmid} #{PMC_ids}`
       grepped.split(",")[8]
     end
   
-    def pmc_xml
+    def pmc_xml_fname
       pmcid = self.pmcid
       if pmcid
         grepped = `grep #{pmcid} #{PMC_file_list}`
@@ -57,7 +63,7 @@ if __FILE__ == $0
     pm = PubMedIDConverter::PubMed.new(pmid)
     pmcid = pm.pmcid
     ap pmcid
-    pm.pmc_xml if pmcid
+    pm.pmc_xml_fname if pmcid
   end
   
   purified = pmc_xml_list.select{|n| n }.uniq
