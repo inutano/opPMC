@@ -88,7 +88,7 @@ end
 
 if __FILE__ == $0
   require "ap"
-  require "./idconverter_pmc.rb"
+  require "./pmc_id_converter.rb"
   id_arr = ["22504184", "11250746", "21923928", "21888672"]
   id_arr.each do |id|
     xml = PubMedIDConverter::PubMed.new(id).pubmed_xml
