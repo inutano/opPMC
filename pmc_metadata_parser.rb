@@ -60,18 +60,22 @@ class PMCMetadataParser
   
   def body
     @nkgr.css("body").children.map do |node_section|
-      sec_title = node_section.css("title").first.inner_text
-      nodeset_subsec = node_section.css("sec")
-      unless nodeset_subsec.empty?
-        subsec = nodeset_subsec.map do |node_subsec|
-          subsec_title = node_subsec.css("title").inner_text
-          subsec_text = node_subsec.css("p").map{|n| n.inner_text }
-          { subsec_title: subsec_title, subsec_text: subsec_text }
+      begin
+        sec_title = node_section.css("title").first.inner_text
+        nodeset_subsec = node_section.css("sec")
+        unless nodeset_subsec.empty?
+          subsec = nodeset_subsec.map do |node_subsec|
+            subsec_title = node_subsec.css("title").inner_text
+            subsec_text = node_subsec.css("p").map{|n| n.inner_text }
+            { subsec_title: subsec_title, subsec_text: subsec_text }
+          end
+          { sec_title: sec_title, subsec: subsec }
+        else
+          sec_text = node_section.css("p").map{|n| n.inner_text }
+          { sec_title: sec_title, sec_text: sec_text }
         end
-        { sec_title: sec_title, subsec: subsec }
-      else
-        sec_text = node_section.css("p").map{|n| n.inner_text }
-        { sec_title: sec_title, sec_text: sec_text }
+      rescue NoMethodError
+        next
       end
     end
   end
@@ -105,5 +109,15 @@ end
 
 if __FILE__ == $0
   p = PMCMetadataParser.new(open("./test.xml"))
-  ap p.all
+  #ap p.all
+  text = p.body.map do |section|
+    if section.has_key?(:subsec)
+      section[:subsec].map do |subsec|
+        subsec[:subsec_text]
+      end
+    else
+      section[:sec_text]
+    end
+  end
+  ap text.flatten.join("\s")
 end
