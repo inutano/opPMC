@@ -53,26 +53,30 @@ def get_sra_publication
 end
 
 if __FILE__ == $0
+  # INIT TABLE FOR ID CONVERTER
   pmc_ids_path = "./PMC-ids.csv"
   pmc_file_list_path = "./file_list.txt"
   PubMedIDConverter.load_table(pmc_ids_path, pmc_file_list_path)
-
-  sra_publication = get_sra_publication
-  pmc_xml_list = sra_publication.map do |entry|
-    pmid = entry[:pmid]
-    pm = PubMedIDConverter::PubMed.new(pmid)
-    pmcid = pm.pmcid
-    ap pmcid
-    pm.pmc_xml_fname if pmcid
-  end
   
+  
+  sra_publication = get_sra_publication
+  pmid_in_sra = sra_publication.map{|record| record[:pmid] }.uniq
+  
+  pmcid_in_sra = pmid_in_sra.map{|pmid| PubMedIDConverter::PubMed.new(pmid).pmcid }.select{|n| n }.uniq
+  
+  pmc_xml_list = pmid_in_sra.map do |pmid|
+    pm = PubMedIDConverter::PubMed.new(pmid)
+    if pm.pmcid
+      xml = pm.pmc_xml_fname
+      ap pmid unless xml
+    end
+  end
   purified = pmc_xml_list.select{|n| n }.uniq
-  open("pmc_xml_list.json","w"){|f| JSON.dump(purified, f)}
+
+#  open("pmc_xml_list.json","w"){|f| JSON.dump(purified, f)}
   purified.each do |xml|
     base = "./pmc_xml/"
     fpath = base + xml
-    ap fpath
-    ap File.exist?(fpath)
+#    ap fpath unless File.exist?(fpath)
   end
-  ap purified.length
 end
