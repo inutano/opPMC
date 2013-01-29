@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 
 require "nokogiri"
+require "open-uri"
 require "ap"
 
 class PMCMetadataParser
   def initialize(xml)
     @nkgr = Nokogiri::XML(xml)
+  end
+  
+  def pmcid
+    @nkgr.css("article-id").select{|n| n.attr("pub-id-type") == "pmc"}.first.inner_text
+  end
+  
+  def pmid
+    @nkgr.css("article-id").select{|n| n.attr("pub-id-type") == "pmid"}.first.inner_text    
   end
   
   def journal_id
@@ -90,8 +99,23 @@ class PMCMetadataParser
     end
   end
   
+  def cited_by
+    pmcid = self.pmcid
+    url = "http://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
+    nkgr = Nokogiri::XML(open(url))
+    article_list = nkgr.css("div.rprt").select{|node| !node.css("dl.rprtid/dd").inner_text.include?(pmcid) }
+    article_list.map do |node|
+      pmcid = node.css("dl.rprtid/dd").inner_text
+      title = node.css("div.title/a").inner_text
+      { pmcid: pmcid,
+        title: title }
+    end
+  end
+  
   def all
-    { journal_id: self.journal_id,
+    { pmcid: self.pmcid,
+      pmid: self.pmid,
+      journal_id: self.journal_id,
       journal_title: self.journal_title,
       publisher_name: self.publisher_name,
       publisher_loc: self.publisher_loc,
@@ -102,22 +126,26 @@ class PMCMetadataParser
       abstract: self.abstract,
       keywords: self.keywords,
       body: self.body,
-      ref_journal_list: self.ref_journal_list }
+      ref_journal_list: self.ref_journal_list,
+      cited_by: self.cited_by }
   end
 end
 
 
 if __FILE__ == $0
   p = PMCMetadataParser.new(open("./test.xml"))
-  #ap p.all
-  text = p.body.map do |section|
-    if section.has_key?(:subsec)
-      section[:subsec].map do |subsec|
-        subsec[:subsec_text]
+  ap p.all
+  
+  if ARGV.first == "--text"
+    text = p.body.map do |section|
+      if section.has_key?(:subsec)
+        section[:subsec].map do |subsec|
+          subsec[:subsec_text]
+        end
+      else
+        section[:sec_text]
       end
-    else
-      section[:sec_text]
     end
+    ap text.flatten.join("\s")
   end
-  ap text.flatten.join("\s")
 end
