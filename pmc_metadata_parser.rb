@@ -106,7 +106,7 @@ class PMCMetadataParser
     article_list = nkgr.css("div.rprt").select{|node| !node.css("dl.rprtid/dd").inner_text.include?(pmcid) }
     article_list.map do |node|
       pmcid = node.css("dl.rprtid/dd").inner_text
-      title = node.css("div.title/a").inner_text
+      title = node.css("div.title").inner_text
       { pmcid: pmcid,
         title: title }
     end
