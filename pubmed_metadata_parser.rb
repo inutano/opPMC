@@ -11,6 +11,11 @@ class PubMedMetadataParser
     @nkgr.css("MedlineCitation PMID").first.inner_text
   end
   
+  def pmcid
+    array = @nkgr.css("ArticleIdList/ArticleId").select{|node| node.attribute("IdType").value == "pmc" }
+    array.first.inner_text if array.first
+  end
+  
   def journal_title
     @nkgr.css("Journal Title").inner_text
   end
@@ -74,6 +79,7 @@ class PubMedMetadataParser
   
   def all
     { pmid: self.pmid,
+      pmcid: self.pmcid,
       journal_title: self.journal_title,
       journal_isoabbreviation: self.journal_isoabbreviation,
       article_title: self.article_title,
