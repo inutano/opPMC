@@ -2,7 +2,6 @@
 
 require "nokogiri"
 require "open-uri"
-require "ap"
 
 class PMCMetadataParser
   def initialize(xml)
@@ -10,11 +9,11 @@ class PMCMetadataParser
   end
   
   def pmcid
-    @nkgr.css("article-id").select{|n| n.attr("pub-id-type") == "pmc"}.first.inner_text
+    @nkgr.css("article-id").select{|n| n.attr("pub-id-type").to_s == "pmc"}.first.inner_text
   end
   
   def pmid
-    @nkgr.css("article-id").select{|n| n.attr("pub-id-type") == "pmid"}.first.inner_text    
+    @nkgr.css("article-id").select{|n| n.attr("pub-id-type").to_s == "pmid"}.first.inner_text
   end
   
   def journal_id
@@ -101,15 +100,20 @@ class PMCMetadataParser
   
   def cited_by
     pmcid = self.pmcid
-    url = "http://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
-    nkgr = Nokogiri::XML(open(url))
-    article_list = nkgr.css("div.rprt").select{|node| !node.css("dl.rprtid/dd").inner_text.include?(pmcid) }
-    article_list.map do |node|
-      pmcid = node.css("dl.rprtid/dd").inner_text
-      title = node.css("div.title").inner_text
-      { pmcid: pmcid,
-        title: title }
+    if pmcid
+      url = "http://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
+      puts url
+      nkgr = Nokogiri::XML(open(url))
+      article_list = nkgr.css("div.rprt").select do |node|
+        !node.css("dl.rprtid/dd").inner_text.include?(pmcid)
+      end
+      article_list.map do |node|
+        { pmcid: node.css("dl.rprtid/dd").inner_text,
+          title: node.css("div.title").inner_text }
+      end
     end
+  rescue OpenURI::HTTPError
+    nil
   end
   
   def all
@@ -133,6 +137,7 @@ end
 
 
 if __FILE__ == $0
+  require "ap"
   p = PMCMetadataParser.new(open("./test.xml"))
   ap p.all
   
