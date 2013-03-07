@@ -102,7 +102,6 @@ class PMCMetadataParser
     pmcid = self.pmcid
     if pmcid
       url = "http://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
-      puts url
       nkgr = Nokogiri::XML(open(url))
       article_list = nkgr.css("div.rprt").select do |node|
         !node.css("dl.rprtid/dd").inner_text.include?(pmcid)
