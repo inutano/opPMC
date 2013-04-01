@@ -8,6 +8,10 @@ class PMCMetadataParser
     @nkgr = Nokogiri::XML(xml)
   end
   
+  def is_available?
+    @nkgr.css("article-id").first
+  end
+  
   def pmcid
     @nkgr.css("article-id").select{|n| n.attr("pub-id-type").to_s == "pmc"}.first.inner_text
   end
