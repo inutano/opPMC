@@ -7,45 +7,45 @@ class PMCMetadataParser
   def initialize(xml)
     @nkgr = Nokogiri::XML(xml)
   end
-  
+
   def is_available?
     @nkgr.css("article-id").first
   end
-  
+
   def pmcid
     @nkgr.css("article-id").select{|n| n.attr("pub-id-type").to_s == "pmc"}.first.inner_text
   end
-  
+
   def pmid
     @nkgr.css("article-id").select{|n| n.attr("pub-id-type").to_s == "pmid"}.first.inner_text
   end
-  
+
   def journal_id
     @nkgr.css("journal-id").inner_text
   end
-  
+
   def journal_title
     @nkgr.css("journal-title").inner_text
   end
-  
+
   def publisher_name
     @nkgr.css("publisher-name").inner_text
   end
-  
+
   def publisher_loc
     @nkgr.css("publisher-loc").inner_text
   end
-  
+
   def article_title
     @nkgr.css("title-group article-title").inner_text
   end
-  
+
   def authors
     @nkgr.css("contrib-group name").map do |node|
       node.css("surname").inner_text + "\s" + node.css("given-names").inner_text
     end
   end
-  
+
   def ppub_date
     node = @nkgr.css("pub-date").select{|n| n.attr("pub-type").to_s == "ppub" }.first
     year = node.css("year").inner_text
@@ -53,7 +53,7 @@ class PMCMetadataParser
     day = node.css("day").inner_text
     {year: year, month: month, day: day}
   end
-  
+
   def epub_date
     node = @nkgr.css("pub-date").select{|n| n.attr("pub-type").to_s == "epub" }.first
     year = node.css("year").inner_text
@@ -61,15 +61,15 @@ class PMCMetadataParser
     day = node.css("day").inner_text
     {year: year, month: month, day: day}
   end
-  
+
   def abstract
     @nkgr.css("abstract").inner_text
   end
-  
+
   def keywords
     @nkgr.css("kwd").map{|n| n.inner_text }
   end
-  
+
   def body
     @nkgr.css("body").children.map do |node_section|
       begin
@@ -91,7 +91,7 @@ class PMCMetadataParser
       end
     end
   end
-  
+
   def ref_journal_list
     cite = @nkgr.css("citation").select{|n| n.attr("citation-type").to_s == "journal" }
     cite.map do |node|
@@ -101,11 +101,11 @@ class PMCMetadataParser
       { article_title: article_title, pmid: pmid }
     end
   end
-  
+
   def cited_by
     pmcid = self.pmcid
     if pmcid
-      url = "http://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
+      url = "https://ncbi.nlm.nih.gov/pmc/articles/PMC#{pmcid}/citedby"
       nkgr = Nokogiri::XML(open(url))
       article_list = nkgr.css("div.rprt").select do |node|
         !node.css("dl.rprtid/dd").inner_text.include?(pmcid)
@@ -118,7 +118,7 @@ class PMCMetadataParser
   rescue OpenURI::HTTPError
     nil
   end
-  
+
   def all
     { pmcid: self.pmcid,
       pmid: self.pmid,
@@ -143,7 +143,7 @@ if __FILE__ == $0
   require "ap"
   p = PMCMetadataParser.new(open("./test.xml"))
   ap p.all
-  
+
   if ARGV.first == "--text"
     text = p.body.map do |section|
       if section.has_key?(:subsec)
